@@ -439,6 +439,20 @@
           "default": "",
           "scope": "window",
           "markdownDescription": "Filter the **My issues** view to a single Linear project (matched by name, case-insensitive). Set it in *workspace* settings so each repository shows only its own project. Leave empty to show all assigned issues."
+        },
+        "linearToCode.agentTarget": {
+          "type": "string",
+          "enum": [
+            "cursor",
+            "claude"
+          ],
+          "enumDescriptions": [
+            "Cursor Composer (billed by your Cursor plan).",
+            "Claude Code panel (extension anthropic.claude-code, billed by your Claude plan). Works in any VS Code fork."
+          ],
+          "default": "claude",
+          "scope": "window",
+          "markdownDescription": "Which agent receives the ticket prompt on **Start work with agent**."
         }
       }
     }
