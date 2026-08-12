@@ -21,7 +21,6 @@ const CLAUDE_OPEN_COMMANDS = [
 ] as const
 
 const CLAUDE_FOCUS_COMMAND = "claude-vscode.focus"
-const PASTE_COMMAND = "editor.action.clipboardPasteAction"
 const UI_READY_DELAY_MS = 600
 
 function sleep(ms: number): Promise<void> {
@@ -33,7 +32,7 @@ export async function isClaudeCodeAvailable(): Promise<boolean> {
   return CLAUDE_OPEN_COMMANDS.some((command) => available.has(command))
 }
 
-export async function openClaudeCodeWithPrompt(prompt: string): Promise<void> {
+export async function openClaudeCodeWithPrompt(prompt: string, label: string): Promise<void> {
   const trimmedPrompt = prompt.trim()
   if (!trimmedPrompt) {
     throw new Error("Prompt is required to open Claude Code.")
@@ -48,41 +47,39 @@ export async function openClaudeCodeWithPrompt(prompt: string): Promise<void> {
     )
   }
 
-  let previousClipboard: string | undefined
-  try {
-    previousClipboard = await env.clipboard.readText()
-  } catch {
-    previousClipboard = undefined
-  }
+  // The prompt stays on the clipboard on purpose. The panel is a webview and
+  // `editor.action.clipboardPasteAction` only reaches text editors, so the
+  // paste has to come from the user's keyboard; restoring the clipboard here
+  // would leave them with nothing to paste.
+  await env.clipboard.writeText(trimmedPrompt)
+  await commands.executeCommand(openCommand)
+  await sleep(UI_READY_DELAY_MS)
 
-  try {
-    await env.clipboard.writeText(trimmedPrompt)
-    await commands.executeCommand(openCommand)
-    await sleep(UI_READY_DELAY_MS)
-
-    if (available.has(CLAUDE_FOCUS_COMMAND)) {
-      try {
-        await commands.executeCommand(CLAUDE_FOCUS_COMMAND)
-      } catch {
-        // Focus is best effort: the paste below may still land.
-      }
-    }
-
+  if (available.has(CLAUDE_FOCUS_COMMAND)) {
     try {
-      await commands.executeCommand(PASTE_COMMAND)
+      await commands.executeCommand(CLAUDE_FOCUS_COMMAND)
     } catch {
-      void window.showInformationMessage(
-        "Claude Code opened. The prompt is on your clipboard, paste it with Cmd+V.",
-      )
-      return
-    }
-  } finally {
-    if (previousClipboard !== undefined) {
-      try {
-        await env.clipboard.writeText(previousClipboard)
-      } catch {
-        // Keep the prompt on the clipboard when restore fails.
-      }
+      // Focus is best effort.
     }
   }
+
+  void window.showInformationMessage(`${label} prompt copied. Paste it in Claude Code with Cmd+V.`)
+}
+
+/**
+ * Fully automatic alternative: run the Claude Code CLI in an integrated
+ * terminal with the prompt already as its argument. No paste involved, at the
+ * cost of the session living in a terminal instead of the panel.
+ */
+export async function openClaudeTerminalWithPrompt(prompt: string, label: string): Promise<void> {
+  const trimmedPrompt = prompt.trim()
+  if (!trimmedPrompt) {
+    throw new Error("Prompt is required to open Claude Code.")
+  }
+
+  const terminal = window.createTerminal({ name: `Claude · ${label}` })
+  terminal.show()
+  // Single quotes keep the newlines; the only character to escape is the quote.
+  const quoted = `'${trimmedPrompt.replace(/'/g, `'\\''`)}'`
+  terminal.sendText(`claude ${quoted}`)
 }

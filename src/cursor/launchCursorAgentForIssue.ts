@@ -1,6 +1,9 @@
 import { Issue } from "@linear/sdk"
 import { buildClaudeIssuePrompt } from "src/claudeCode/claudePrompt"
-import { openClaudeCodeWithPrompt } from "src/claudeCode/openClaudeCode"
+import {
+  openClaudeCodeWithPrompt,
+  openClaudeTerminalWithPrompt,
+} from "src/claudeCode/openClaudeCode"
 import { Controller } from "src/controller"
 import { readAgentSettings } from "src/cursor/agentPromptSettings"
 import { buildIssueAgentPrompt } from "src/cursor/buildIssueAgentPrompt"
@@ -11,11 +14,11 @@ import { ExtensionContext, env, window, workspace } from "vscode"
 // Which agent receives the ticket prompt. "cursor" keeps the upstream
 // behaviour (Composer); "claude" sends it to the Claude Code panel, which
 // works in any VS Code fork and runs on the user's Claude subscription.
-function readAgentTarget(): "cursor" | "claude" {
-  return workspace.getConfiguration("linearToCode").get<"cursor" | "claude">("agentTarget") ===
-    "claude"
-    ? "claude"
-    : "cursor"
+type AgentTarget = "cursor" | "claude" | "claude-terminal"
+
+function readAgentTarget(): AgentTarget {
+  const value = workspace.getConfiguration("linearToCode").get<AgentTarget>("agentTarget")
+  return value === "claude" || value === "claude-terminal" ? value : "cursor"
 }
 
 export async function launchCursorAgentForIssue(
@@ -35,9 +38,13 @@ export async function launchCursorAgentForIssue(
     identifier = loadedIssue.identifier
   }
 
-  if (target === "claude") {
+  if (target === "claude" || target === "claude-terminal") {
     const prompt = buildClaudeIssuePrompt(identifier, { editorLanguageLocale: env.language })
-    await openClaudeCodeWithPrompt(prompt)
+    if (target === "claude-terminal") {
+      await openClaudeTerminalWithPrompt(prompt, identifier)
+    } else {
+      await openClaudeCodeWithPrompt(prompt, identifier)
+    }
     return
   }
 

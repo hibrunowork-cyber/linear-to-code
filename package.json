@@ -444,11 +444,13 @@
           "type": "string",
           "enum": [
             "cursor",
-            "claude"
+            "claude",
+            "claude-terminal"
           ],
           "enumDescriptions": [
             "Cursor Composer (billed by your Cursor plan).",
-            "Claude Code panel (extension anthropic.claude-code, billed by your Claude plan). Works in any VS Code fork."
+            "Claude Code panel: opens a new conversation and copies the prompt, you paste it with Cmd+V (the panel is a webview, extensions cannot type into it).",
+            "Claude Code CLI in an integrated terminal, with the prompt already passed as argument: fully automatic, but the session lives in a terminal."
           ],
           "default": "claude",
           "scope": "window",
