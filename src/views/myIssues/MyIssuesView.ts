@@ -72,6 +72,7 @@ export class MyIssuesView
   #assigneeIconByUserId: Map<string, Uri> = new Map()
   #assigneeByUserId: Map<string, User> = new Map()
   #viewMode: ViewMode = "myIssues"
+  #projectFilterEnabled = true
 
   #issuesWebviews: Map<string, IssueWebview> = new Map()
   #startWorkWebviews: Map<string, StartWorkWebview> = new Map()
@@ -151,6 +152,7 @@ export class MyIssuesView
       ),
       commands.registerCommand(Commands.refresh, () => this.fetchDatas()),
       commands.registerCommand(Commands.toggleViewMode, () => this.toggleViewMode()),
+      commands.registerCommand(Commands.toggleProjectFilter, () => this.toggleProjectFilter()),
       commands.registerCommand(Commands.openPullRequest, (issue: Issue) =>
         this.openPullRequestForIssue(issue),
       ),
@@ -251,10 +253,12 @@ export class MyIssuesView
     let issues: Issue[]
 
     if (this.#viewMode === "myIssues") {
-      issues = await Controller.linearService.getAssignedIssues()
+      const project = this.#projectFilterEnabled ? this.#getConfiguredProject() : undefined
+      issues = await Controller.linearService.getAssignedIssues(project)
     } else {
       issues = await Controller.linearService.getCurrentCycleIssues()
     }
+    this.#updateProjectFilterDescription()
 
     // Clear previous issues and add new ones
     this.#myIssues.clear()
@@ -266,6 +270,34 @@ export class MyIssuesView
     await this._refreshAssigneeIcons(issues)
     this.#treeItems.clear()
     this.#onDidChangeTreeData.fire()
+  }
+
+  #getConfiguredProject(): string | undefined {
+    const value = workspace.getConfiguration("linearToCode").get<string>("project")?.trim()
+    return value || undefined
+  }
+
+  #updateProjectFilterDescription() {
+    if (!this.#treeView) {
+      return
+    }
+    const project = this.#getConfiguredProject()
+    this.#treeView.description =
+      project && this.#projectFilterEnabled && this.#viewMode === "myIssues"
+        ? `project: ${project}`
+        : undefined
+  }
+
+  public async toggleProjectFilter() {
+    const project = this.#getConfiguredProject()
+    if (!project) {
+      window.showInformationMessage(
+        'Linear to Code: set "linearToCode.project" in your workspace settings to enable the project filter.',
+      )
+      return
+    }
+    this.#projectFilterEnabled = !this.#projectFilterEnabled
+    await this.fetchDatas()
   }
 
   public async toggleViewMode() {

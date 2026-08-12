@@ -45,12 +45,15 @@ export async function fetchWorkflowStatesByTeam(
   return workflowStatesByTeam
 }
 
-export async function fetchAssignedIssues(me: User | null): Promise<Issue[]> {
+export async function fetchAssignedIssues(me: User | null, projectName?: string): Promise<Issue[]> {
   if (!me) {
     return []
   }
 
-  const issues = await me.assignedIssues({ first: 250 })
+  const issues = await me.assignedIssues({
+    first: 250,
+    ...(projectName ? { filter: { project: { name: { eqIgnoreCase: projectName } } } } : {}),
+  })
   return issues.nodes.map((issue) => addKeyOnItem(issue, "issue"))
 }
 

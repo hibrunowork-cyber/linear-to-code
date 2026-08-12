@@ -225,6 +225,12 @@
         "title": "Switch to source branch",
         "category": "Linear to Code",
         "enablement": "linearToCode:isLinearAuthenticated && linearToCode:isGitExtensionLoaded"
+      },
+      {
+        "command": "linearToCode.commands.toggleProjectFilter",
+        "title": "Toggle project filter",
+        "category": "Linear to Code",
+        "icon": "$(filter)"
       }
     ],
     "menus": {
@@ -283,6 +289,11 @@
         }
       ],
       "view/title": [
+        {
+          "command": "linearToCode.commands.toggleProjectFilter",
+          "when": "view == linearToCode.views.myIssues",
+          "group": "navigation@1"
+        },
         {
           "command": "linearToCode.commands.refresh",
           "when": "view == linearToCode.views.myIssues",
@@ -419,7 +430,18 @@
         "key": "ctrl+k ctrl+i",
         "mac": "cmd+k cmd+i"
       }
-    ]
+    ],
+    "configuration": {
+      "title": "Linear to Code",
+      "properties": {
+        "linearToCode.project": {
+          "type": "string",
+          "default": "",
+          "scope": "window",
+          "markdownDescription": "Filter the **My issues** view to a single Linear project (matched by name, case-insensitive). Set it in *workspace* settings so each repository shows only its own project. Leave empty to show all assigned issues."
+        }
+      }
+    }
   },
   "configuration": {
     "title": "Linear to Code",
@@ -464,6 +486,7 @@
     "css-minimizer-webpack-plugin": "^7.0.4",
     "dotenv": "^17.4.2",
     "eslint": "^9.39.2",
+    "eslint-config-prettier": "^10.1.8",
     "eslint-import-resolver-typescript": "^4.4.4",
     "eslint-plugin-import": "^2.32.0",
     "eslint-plugin-import-x": "^4.16.1",
@@ -503,7 +526,6 @@
     "webpack-cli": "^6.0.1"
   },
   "dependencies": {
-    "-": "^0.0.1",
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/modifiers": "^9.0.0",
     "@dnd-kit/sortable": "^10.0.0",

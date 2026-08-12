@@ -19,4 +19,4 @@ logs
 .DS_Store
 
 # Caches
-**/.cache
+**/.cache*.vsix

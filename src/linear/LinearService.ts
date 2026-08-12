@@ -66,7 +66,7 @@ export class LinearService {
   }
 
   invalidateIssueLists(): void {
-    this.#cache.delete("assignedIssues")
+    this.#cache.deleteByPrefix("assignedIssues")
     this.#cache.deleteByPrefix("cycleIssues:")
   }
 
@@ -172,10 +172,11 @@ export class LinearService {
     return this.getIssue(issueId)
   }
 
-  async getAssignedIssues(): Promise<TreeIssue[]> {
-    return this.#cache.getOrFetch("assignedIssues", async () => {
+  async getAssignedIssues(projectName?: string): Promise<TreeIssue[]> {
+    const cacheKey = projectName ? `assignedIssues:${projectName}` : "assignedIssues"
+    return this.#cache.getOrFetch(cacheKey, async () => {
       const me = await this.getViewer()
-      return fetchAssignedIssues(me)
+      return fetchAssignedIssues(me, projectName)
     })
   }
 
