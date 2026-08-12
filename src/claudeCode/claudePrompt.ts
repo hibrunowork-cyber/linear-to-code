@@ -1,5 +1,4 @@
 import { renderAgentPromptTemplate } from "src/cursor/renderAgentPromptTemplate"
-import { resolveEditorLanguage } from "src/cursor/resolveEditorLanguage"
 
 /**
  * Prompt used when the agent target is Claude Code.
@@ -8,34 +7,37 @@ import { resolveEditorLanguage } from "src/cursor/resolveEditorLanguage"
  * extension's embedded MCP, which only the Cursor agent has. A Claude Code
  * session reaches Linear through the official Linear MCP (`mcp.linear.app`),
  * so the loading step is worded for those tools instead.
+ *
+ * The template is written in pt-BR on purpose: this fork's owner works in
+ * Portuguese and the pasted prompt is user-visible text.
  */
 export const DEFAULT_CLAUDE_ISSUE_PROMPT_TEMPLATE = [
-  "Implement Linear issue {{issueIdentifier}} in this workspace.",
+  "Execute a issue {{issueIdentifier}} do Linear neste workspace.",
   "",
-  "Step 1 — Load the ticket with the Linear MCP (do not ask me to paste it):",
-  "- `get_issue` for {{issueIdentifier}}",
-  "- `list_comments` for {{issueIdentifier}} (discussion and clarifications)",
-  "- follow the issues it references when they change the scope",
+  "Passo 1, carregar o ticket pelo MCP do Linear (não me peça para colar nada):",
+  "- `get_issue` da {{issueIdentifier}}",
+  "- `list_comments` da {{issueIdentifier}} (discussão e esclarecimentos)",
+  "- siga as issues referenciadas quando mudarem o escopo",
   "",
-  "Step 2 — From that context, identify the goal, acceptance criteria, constraints, and affected areas.",
+  "Passo 2, extrair desse contexto o objetivo, o critério de aceite, as restrições e as áreas afetadas.",
   "",
-  "Step 3 — Implement:",
-  "- Make the smallest correct change that satisfies the ticket",
-  "- Follow the conventions already in this repository",
-  "- Respect the rules in CLAUDE.md, including the ones about what must not be touched",
+  "Passo 3, implementar:",
+  "- A menor mudança correta que cumpre o ticket",
+  "- Seguindo as convenções que já existem neste repositório",
+  "- Respeitando as regras do CLAUDE.md, inclusive as de não tocar",
   "",
-  "Step 4 — Verify before reporting: run the project's build or tests, and check the acceptance criteria one by one against the real output, not against your intent.",
+  "Passo 4, verificar antes de reportar: rode o build ou os testes do projeto e confira o critério de aceite item a item contra a saída real, não contra a intenção.",
   "",
-  "If something critical is ambiguous, state your assumption and continue.",
+  "Se algo crítico estiver ambíguo, declare a premissa adotada e continue.",
   "",
-  "When finished, summarize what changed, how it maps to the ticket, and what you verified.",
+  "Ao terminar, resuma o que mudou, como isso responde ao ticket e o que foi verificado.",
   "",
-  "Respond in {{editorLanguage}}.",
+  "Responda em português (pt-BR).",
 ].join("\n")
 
 export function buildClaudeIssuePrompt(
   issueIdentifier: string,
-  options?: { editorLanguageLocale?: string; template?: string },
+  options?: { template?: string },
 ): string {
   const identifier = issueIdentifier.trim()
   if (!identifier) {
@@ -46,6 +48,5 @@ export function buildClaudeIssuePrompt(
 
   return renderAgentPromptTemplate(template, {
     issueIdentifier: identifier,
-    editorLanguage: resolveEditorLanguage(options?.editorLanguageLocale),
   })
 }

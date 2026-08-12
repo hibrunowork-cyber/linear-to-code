@@ -39,7 +39,7 @@ export async function launchCursorAgentForIssue(
   }
 
   if (target === "claude" || target === "claude-terminal") {
-    const prompt = buildClaudeIssuePrompt(identifier, { editorLanguageLocale: env.language })
+    const prompt = buildClaudeIssuePrompt(identifier)
     if (target === "claude-terminal") {
       await openClaudeTerminalWithPrompt(prompt, identifier)
     } else {
