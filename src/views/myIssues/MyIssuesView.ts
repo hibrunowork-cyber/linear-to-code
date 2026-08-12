@@ -468,7 +468,28 @@ export class MyIssuesView
     window.showInformationMessage(`No Linear issue found for branch "${currentBranch.name}"`)
   }
 
+  /**
+   * Branch operations are only safe when the open folder IS the repository
+   * root. When the folder is a subdirectory of a larger repository (a docs
+   * vault, a monorepo opened at a subfolder), Start work would create the
+   * issue branch on that outer repository, which is almost never the intent.
+   */
+  #guardRepositoryRoot(): boolean {
+    const repoRoot = Controller.git.getRepositoryRoot()
+    const workspaceRoot = Controller.git.getWorkspaceRoot()
+    if (!repoRoot || !workspaceRoot || repoRoot === workspaceRoot) {
+      return true
+    }
+    void window.showErrorMessage(
+      `Start work blocked: this folder is inside the repository at ${repoRoot}, not a repository of its own. Open the code repository's root folder to create the issue branch.`,
+    )
+    return false
+  }
+
   public async startWork(issue: Issue, fromCheckout?: true) {
+    if (!this.#guardRepositoryRoot()) {
+      return
+    }
     let webview = this.#startWorkWebviews.get(issue.id)
     if (!webview) {
       webview = new StartWorkWebview(this.#context, this.issuesActions, fromCheckout)
@@ -478,6 +499,9 @@ export class MyIssuesView
   }
 
   public async startWorkWithAgent(issue: Issue) {
+    if (!this.#guardRepositoryRoot()) {
+      return
+    }
     if (!(await ensureCursorEnvironment())) {
       void window.showInformationMessage("Start work with agent is available in Cursor only.")
       return

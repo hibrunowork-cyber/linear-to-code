@@ -74,6 +74,19 @@ export class GitClient {
     }
   }
 
+  /**
+   * Root of the git repository that was resolved for this workspace. When the
+   * open folder lives INSIDE a larger repository (e.g. a docs monorepo), this
+   * is the ancestor's root, not the folder itself.
+   */
+  getRepositoryRoot(): string | null {
+    return this.#repository?.rootUri.fsPath ?? null
+  }
+
+  getWorkspaceRoot(): string | null {
+    return this.#rootPath
+  }
+
   getGitStatus(): { repoActive: boolean; apiActive: boolean } {
     return {
       repoActive: this.repositoryActive,
