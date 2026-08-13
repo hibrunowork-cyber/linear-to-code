@@ -1,0 +1,47 @@
+.refreshIssueButtonIcon {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.refreshIssueButtonBadge {
+  position: absolute;
+  top: -5px;
+  right: -6px;
+  color: var(--color-warning);
+
+  // The badge sits over the button surface, so it needs its own contrast.
+  filter: drop-shadow(0 0 1px var(--bg-color));
+}
+
+.refreshIssueButtonStale {
+  color: var(--color-warning);
+
+  .refreshIssueButtonIcon {
+    animation: refreshIssueButtonPulse 1.6s ease-in-out infinite;
+  }
+
+  &:hover,
+  &:focus {
+    color: var(--color-warning);
+  }
+}
+
+@keyframes refreshIssueButtonPulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.45;
+  }
+}
+
+// Reduced motion still gets the colour and the badge, just no pulse.
+@media (prefers-reduced-motion: reduce) {
+  .refreshIssueButtonStale .refreshIssueButtonIcon {
+    animation: none;
+  }
+}

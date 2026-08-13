@@ -36,6 +36,13 @@ const emptyHistoryFields = {
   subIssuesLoading: false,
   attachments: null as IssueContextValueData["attachments"],
   attachmentsLoading: false,
+  // Start Work is a short-lived dialog: it loads the issue, gets a branch out
+  // of it and closes, so there is nothing here to go stale.
+  issueSync: {
+    isStale: false,
+    isRefreshing: false,
+    refresh: async () => Promise.resolve(),
+  } as IssueContextValueData["issueSync"],
 }
 
 export function StartWorkContextProvider(props: StartWorkContextProviderProps) {

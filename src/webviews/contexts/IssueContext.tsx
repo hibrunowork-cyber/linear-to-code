@@ -1,5 +1,5 @@
 import { IssuePriorityValue, LinearClient } from "@linear/sdk"
-import { createContext, ReactNode, useContext, useMemo, useState } from "react"
+import { createContext, ReactNode, useContext, useEffect, useMemo, useRef, useState } from "react"
 import {
   SerializedAttachment,
   SerializedCycle,
@@ -109,6 +109,12 @@ export type IssueContextValueData = {
   subIssuesLoading: boolean
   attachments: SerializedAttachment[] | null
   attachmentsLoading: boolean
+  issueSync: {
+    /** The issue changed in Linear after the panel loaded it. */
+    isStale: boolean
+    isRefreshing: boolean
+    refresh: () => Promise<void>
+  }
 }
 
 const IssueContextReact = createContext<IssueContextValueData>({
@@ -204,7 +210,15 @@ const IssueContextReact = createContext<IssueContextValueData>({
   subIssuesLoading: false,
   attachments: null,
   attachmentsLoading: false,
+  issueSync: {
+    isStale: false,
+    isRefreshing: false,
+    refresh: async () => Promise.reject(),
+  },
 })
+
+/** How often the open panel asks Linear whether the issue moved without it. */
+const STALE_CHECK_INTERVAL_MS = 45 * 1000
 
 export function IssueContextProvider(props: IssueContextProviderProps) {
   const { children, issueId, linearAccessToken, isLoading: externalLoading } = props
@@ -219,6 +233,8 @@ export function IssueContextProvider(props: IssueContextProviderProps) {
   const [attachments, setAttachments] = useState<SerializedAttachment[] | null>(null)
   const [attachmentsLoading, setAttachmentsLoading] = useState(true)
   const [isLoading, setIsLoading] = useState(true)
+  const [isStale, setIsStale] = useState(false)
+  const [isRefreshing, setIsRefreshing] = useState(false)
 
   async function fetchIssue(updatedAt?: number, options?: { bypassCache?: boolean }) {
     if (updatedAt && issue && issue.updatedAt.getTime() >= updatedAt) {
@@ -296,6 +312,89 @@ export function IssueContextProvider(props: IssueContextProviderProps) {
       setIsLoading(false)
     }
   }, [issueId])
+
+  async function refreshIssue() {
+    if (!issueId) {
+      return
+    }
+
+    setIsRefreshing(true)
+    try {
+      await fetchIssue(undefined, { bypassCache: true })
+      setCommentRefetch((r) => r + 1)
+      setHistoryRefetch((r) => r + 1)
+      setSubIssuesRefetch((r) => r + 1)
+      setIssueResourcesRefetch((r) => r + 1)
+      setIsStale(false)
+    } catch (error) {
+      console.error("Failed to refresh issue:", error)
+    } finally {
+      setIsRefreshing(false)
+    }
+  }
+
+  // What the last check compared against. Kept in a ref so the poller below
+  // does not restart its timer on every comment or edit.
+  const loadedStateRef = useRef({ updatedAt: 0, commentCount: -1 })
+  useEffect(() => {
+    loadedStateRef.current = {
+      updatedAt: issue ? new Date(issue.updatedAt).getTime() : 0,
+      // -1 while the comments are still loading: comparing against an empty
+      // list would flag every issue that already has comments.
+      commentCount: commentsLoading || !comments ? -1 : comments.length,
+    }
+  }, [issue, comments, commentsLoading])
+
+  // The panel is a snapshot: nothing pushes Linear changes into it, so an
+  // agent session, the Linear app or a teammate can leave it showing the past.
+  // Refreshing on its own would fight whoever is typing here, so the check
+  // only raises a flag and the reload stays a deliberate click.
+  useEffect(() => {
+    const currentIssueId = issue?.id
+    if (!currentIssueId) {
+      return
+    }
+
+    let cancelled = false
+
+    async function checkForRemoteChanges() {
+      if (document.visibilityState !== "visible" || isRefreshing) {
+        return
+      }
+
+      try {
+        const [remoteIssue, remoteComments] = await Promise.all([
+          panelActions.getIssue(currentIssueId!, { bypassCache: true }),
+          panelActions.getComments(currentIssueId!),
+        ])
+
+        if (cancelled || !remoteIssue) {
+          return
+        }
+
+        const { updatedAt, commentCount } = loadedStateRef.current
+        const issueChanged = new Date(remoteIssue.updatedAt).getTime() > updatedAt
+        // A comment does not bump the issue's updatedAt, and the agent flow
+        // ends exactly there, so it gets its own comparison.
+        const commentsChanged = commentCount >= 0 && (remoteComments?.length ?? 0) !== commentCount
+
+        setIsStale(issueChanged || commentsChanged)
+      } catch (error) {
+        // A failed check is not worth interrupting anyone: the button works
+        // either way and the next tick tries again.
+        console.error("Failed to check the issue for remote changes:", error)
+      }
+    }
+
+    const interval = setInterval(checkForRemoteChanges, STALE_CHECK_INTERVAL_MS)
+    document.addEventListener("visibilitychange", checkForRemoteChanges)
+
+    return () => {
+      cancelled = true
+      clearInterval(interval)
+      document.removeEventListener("visibilitychange", checkForRemoteChanges)
+    }
+  }, [issue?.id, isRefreshing, panelActions])
 
   async function updateIssue(
     id: string,
@@ -531,6 +630,11 @@ export function IssueContextProvider(props: IssueContextProviderProps) {
       subIssuesLoading,
       attachments,
       attachmentsLoading,
+      issueSync: {
+        isStale,
+        isRefreshing,
+        refresh: refreshIssue,
+      },
       update: {
         issue: updateIssue,
         comments: {
@@ -585,6 +689,8 @@ export function IssueContextProvider(props: IssueContextProviderProps) {
       subIssuesLoading,
       attachments,
       attachmentsLoading,
+      isStale,
+      isRefreshing,
     ],
   )
 

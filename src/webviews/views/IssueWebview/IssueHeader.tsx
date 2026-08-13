@@ -13,6 +13,7 @@ import { PriorityPicker } from "src/webviews/components/PriorityPicker/PriorityP
 import { ProjectCyclePicker } from "src/webviews/components/ProjectCyclePicker/ProjectCyclePicker"
 import { IssueProjectPicker } from "src/webviews/components/ProjectPicker/ProjectPicker"
 import { PullRequestButton } from "src/webviews/components/PullRequestButton/PullRequestButton"
+import { RefreshIssueButton } from "src/webviews/components/RefreshIssueButton/RefreshIssueButton"
 import { WorkflowStatePicker } from "src/webviews/components/WorklfowStatePicker/WorkflowStatePicker"
 import { useIssueContext } from "src/webviews/contexts/IssueContext"
 import { useModalsContext } from "src/webviews/contexts/ModalsContext"
@@ -96,6 +97,7 @@ export function IssueHeader() {
               />
             </>
           )}
+          <RefreshIssueButton style={{ marginLeft: 6, padding: 0 }} />
           <OpenExternalIssue issue={issue} style={{ marginLeft: 6, padding: 0 }} />
           <Menu
             items={[
