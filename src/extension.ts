@@ -12,6 +12,7 @@ import { refreshCursorCommandContext } from "./cursor/detectCursorEnvironment"
 import { linearToCodeUriHandler } from "./gitProviders/linearToCodeUriHandler"
 import { initLinearClient } from "./linear/auth"
 import { registerLinearMcpServer } from "./mcp/registerLinearMcpServer"
+import { registerTerminalIssueFollow } from "./terminal/followTerminalIssue"
 
 export async function activate(context: ExtensionContext) {
   const sessionId = activateExtensionSession()
@@ -34,6 +35,7 @@ export async function activate(context: ExtensionContext) {
 
     registerCommands(context)
     registerLinearMcpServer(context)
+    registerTerminalIssueFollow(context)
     await initLinearClient(context, sessionId)
   } catch (error) {
     console.error("[Linear to Code] Activation failed:", error)

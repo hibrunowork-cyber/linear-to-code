@@ -413,13 +413,17 @@ export class MyIssuesView
   // Issue Actions
   // ============================================================
 
-  public async openIssue(issue: Issue, viewColumn?: ViewColumn) {
+  public async openIssue(
+    issue: Issue,
+    viewColumn?: ViewColumn,
+    options?: { preserveFocus?: boolean },
+  ) {
     let webview = this.#issuesWebviews.get(issue.id)
     if (!webview) {
       webview = new IssueWebview(this.#context, this.issuesActions)
       this.#issuesWebviews.set(issue.id, webview)
     }
-    await webview.open(issue, viewColumn ?? ViewColumn.Active)
+    await webview.open(issue, viewColumn ?? ViewColumn.Active, options)
   }
 
   public async openIssueExternal(issueIdentifier: Issue["identifier"] | Issue) {

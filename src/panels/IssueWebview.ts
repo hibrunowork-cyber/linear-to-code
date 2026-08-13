@@ -12,9 +12,9 @@ export class IssueWebview extends AbstractIssueWebview<"issue"> {
     super(context, issueActions)
   }
 
-  async open(issue: Issue, column?: ViewColumn) {
+  async open(issue: Issue, column?: ViewColumn, options?: { preserveFocus?: boolean }) {
     this.issue = issue
-    const panel = await super.createOrShow(column)
+    const panel = await super.createOrShow(column, options)
 
     panel.iconPath = Controller.resources.icons.get("issue")
 

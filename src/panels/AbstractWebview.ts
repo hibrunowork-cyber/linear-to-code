@@ -56,16 +56,18 @@ export abstract class AbstractWebview<K extends keyof Props> implements ReactWeb
     this._storage = context.globalState
   }
 
-  public async createOrShow(column?: ViewColumn) {
+  public async createOrShow(column?: ViewColumn, options?: { preserveFocus?: boolean }) {
+    const preserveFocus = options?.preserveFocus ?? false
+
     if (this._panel) {
-      this._panel.reveal(column ?? ViewColumn.Active)
+      this._panel.reveal(column ?? ViewColumn.Active, preserveFocus)
       return this._panel
     }
 
     this._panel = window.createWebviewPanel(
       AbstractWebview.viewType,
       this.title,
-      column ? column : ViewColumn.Active,
+      { viewColumn: column ?? ViewColumn.Active, preserveFocus },
       {
         enableScripts: true,
         retainContextWhenHidden: true,
