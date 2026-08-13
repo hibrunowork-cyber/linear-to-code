@@ -3,7 +3,7 @@
   "displayName": "Linear in Editor",
   "description": "Get the entire Linear experience in your editor.",
   "icon": "resources/images/linear_dark.png",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "publisher": "hpon",
   "repository": "https://github.com/hponcet/linear-to-code",
   "engines": {
@@ -455,6 +455,18 @@
           "default": "claude",
           "scope": "window",
           "markdownDescription": "Which agent receives the ticket prompt on **Start work with agent**."
+        },
+        "linearToCode.claudeModel": {
+          "type": "string",
+          "default": "opus",
+          "scope": "window",
+          "markdownDescription": "Model passed to the Claude Code CLI (`--model`) when `#linearToCode.agentTarget#` is `claude-terminal`. An alias (`opus`, `sonnet`, `fable`) or a full model name. Leave empty to use the CLI default."
+        },
+        "linearToCode.claudeFastMode": {
+          "type": "boolean",
+          "default": true,
+          "scope": "window",
+          "markdownDescription": "Start the terminal session in fast mode. Fast mode has no CLI flag, so it travels as `--settings {\"fastMode\":true}`, added on top of your settings instead of replacing them. Ignored by models that do not support it."
         }
       }
     }

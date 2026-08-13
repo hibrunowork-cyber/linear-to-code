@@ -1,4 +1,4 @@
-import { commands, env, window } from "vscode"
+import { commands, env, window, workspace } from "vscode"
 
 /**
  * Send a prompt to the Claude Code panel (extension `anthropic.claude-code`).
@@ -66,6 +66,31 @@ export async function openClaudeCodeWithPrompt(prompt: string, label: string): P
   void window.showInformationMessage(`${label} prompt copied. Paste it in Claude Code with Cmd+V.`)
 }
 
+// Single quotes keep the newlines; the only character to escape is the quote.
+function shellQuote(value: string): string {
+  return `'${value.replace(/'/g, `'\\''`)}'`
+}
+
+function buildClaudeCommand(prompt: string): string {
+  const config = workspace.getConfiguration("linearToCode")
+  const model = (config.get<string>("claudeModel") ?? "").trim()
+  const fastMode = config.get<boolean>("claudeFastMode") ?? false
+
+  const args: string[] = []
+  if (model) {
+    args.push("--model", shellQuote(model))
+  }
+  // Fast mode has no CLI flag: it lives in settings.json. `--settings` adds a
+  // layer on top of the user's settings instead of replacing them, so the
+  // session keeps its permissions, hooks and MCP servers.
+  if (fastMode) {
+    args.push("--settings", shellQuote(`{"fastMode":true}`))
+  }
+  args.push(shellQuote(prompt))
+
+  return `claude ${args.join(" ")}`
+}
+
 /**
  * Fully automatic alternative: run the Claude Code CLI in an integrated
  * terminal with the prompt already as its argument. No paste involved, at the
@@ -79,7 +104,5 @@ export async function openClaudeTerminalWithPrompt(prompt: string, label: string
 
   const terminal = window.createTerminal({ name: `Claude · ${label}` })
   terminal.show()
-  // Single quotes keep the newlines; the only character to escape is the quote.
-  const quoted = `'${trimmedPrompt.replace(/'/g, `'\\''`)}'`
-  terminal.sendText(`claude ${quoted}`)
+  terminal.sendText(buildClaudeCommand(trimmedPrompt))
 }
