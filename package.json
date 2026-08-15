@@ -3,7 +3,7 @@
   "displayName": "Linear in Editor",
   "description": "Get the entire Linear experience in your editor.",
   "icon": "resources/images/linear_dark.png",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "publisher": "hpon",
   "repository": "https://github.com/hponcet/linear-to-code",
   "engines": {
@@ -473,6 +473,12 @@
           "default": true,
           "scope": "window",
           "markdownDescription": "Reveal an issue in the editor area when you select a terminal named after it (`Claude · CLA-59`). The terminal keeps the focus. Any terminal whose name contains an issue identifier counts, not only the ones this extension opens."
+        },
+        "linearToCode.revealTerminalOnIssueOpen": {
+          "type": "boolean",
+          "default": true,
+          "scope": "window",
+          "markdownDescription": "Opening an issue switches the terminal pane to the session named after it (`Claude · CLA-59`), without stealing focus. The inverse of `#linearToCode.followTerminalIssue#`."
         }
       }
     }

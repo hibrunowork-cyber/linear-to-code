@@ -7,6 +7,7 @@ import { filterWorkflowStatesByType } from "src/panels/commons/worflowStates"
 import { IssueWebview } from "src/panels/IssueWebview"
 import { SettingsWebview, SettingsTab } from "src/panels/SettingsWebview"
 import { StartWorkWebview } from "src/panels/StartWorkWebview"
+import { revealTerminalForIssue } from "src/terminal/followTerminalIssue"
 import { IssueSyncPayload } from "src/types/IssueSync"
 import { WorkflowStateWithStateProgress } from "src/types/Linear"
 import { Stores } from "src/utils/Stores"
@@ -424,6 +425,12 @@ export class MyIssuesView
       this.#issuesWebviews.set(issue.id, webview)
     }
     await webview.open(issue, viewColumn ?? ViewColumn.Active, options)
+
+    // After the panel: the terminal pane switches to this issue's session
+    // (preserveFocus inside), so ticket and live session line up on one click.
+    if (issue.identifier) {
+      revealTerminalForIssue(issue.identifier)
+    }
   }
 
   public async openIssueExternal(issueIdentifier: Issue["identifier"] | Issue) {

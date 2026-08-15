@@ -59,3 +59,36 @@ export function registerTerminalIssueFollow(context: ExtensionContext) {
     window.onDidChangeActiveTerminal((terminal) => void revealIssueForTerminal(terminal)),
   )
 }
+
+/**
+ * The opposite direction: opening an issue switches the terminal pane to the
+ * session working on it (`Claude · CLA-59`). preserveFocus, so the panel the
+ * user opened keeps the cursor while the terminal shows the live session.
+ * Returns whether a matching terminal was found.
+ */
+export function revealTerminalForIssue(identifier: string): boolean {
+  const enabled = workspace
+    .getConfiguration("linearToCode")
+    .get<boolean>("revealTerminalOnIssueOpen")
+  if (enabled === false) {
+    return false
+  }
+
+  const wanted = identifier.trim().toUpperCase()
+  if (!wanted) {
+    return false
+  }
+
+  // Newest terminal wins: a relaunched issue creates a second `Claude · CLA-N`
+  // and the stale one would otherwise shadow it forever.
+  const match = [...window.terminals]
+    .reverse()
+    .find((t) => t.name.match(ISSUE_IDENTIFIER_PATTERN)?.[1]?.toUpperCase() === wanted)
+
+  if (!match) {
+    return false
+  }
+
+  match.show(true)
+  return true
+}
