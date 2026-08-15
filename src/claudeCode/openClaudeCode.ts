@@ -76,9 +76,14 @@ function buildClaudeCommand(prompt: string): string {
   const model = (config.get<string>("claudeModel") ?? "").trim()
   const fastMode = config.get<boolean>("claudeFastMode") ?? false
 
+  const permissionMode = (config.get<string>("claudePermissionMode") ?? "").trim()
+
   const args: string[] = []
   if (model) {
     args.push("--model", shellQuote(model))
+  }
+  if (permissionMode) {
+    args.push("--permission-mode", shellQuote(permissionMode))
   }
   // Fast mode has no CLI flag: it lives in settings.json. `--settings` adds a
   // layer on top of the user's settings instead of replacing them, so the

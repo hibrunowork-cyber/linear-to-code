@@ -3,7 +3,7 @@
   "displayName": "Linear in Editor",
   "description": "Get the entire Linear experience in your editor.",
   "icon": "resources/images/linear_dark.png",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "publisher": "hpon",
   "repository": "https://github.com/hponcet/linear-to-code",
   "engines": {
@@ -461,6 +461,21 @@
           "default": "opus",
           "scope": "window",
           "markdownDescription": "Model passed to the Claude Code CLI (`--model`) when `#linearToCode.agentTarget#` is `claude-terminal`. An alias (`opus`, `sonnet`, `fable`) or a full model name. Leave empty to use the CLI default."
+        },
+        "linearToCode.claudePermissionMode": {
+          "type": "string",
+          "enum": [
+            "",
+            "auto",
+            "acceptEdits",
+            "bypassPermissions",
+            "manual",
+            "dontAsk",
+            "plan"
+          ],
+          "default": "bypassPermissions",
+          "scope": "window",
+          "markdownDescription": "Permission mode passed to the Claude Code CLI (`--permission-mode`) when `#linearToCode.agentTarget#` is `claude-terminal`. Empty uses the CLI default."
         },
         "linearToCode.claudeFastMode": {
           "type": "boolean",
