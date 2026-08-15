@@ -1,3 +1,4 @@
+import cx from "classnames"
 import { useDialog } from "rsuite"
 import { AssigneePicker } from "src/webviews/components/Assignee/AssigneePicker"
 import { CheckoutButton } from "src/webviews/components/ConfigureBranchButton/CheckoutButton"
@@ -21,7 +22,7 @@ import { useModalsContext } from "src/webviews/contexts/ModalsContext"
 import "./IssueHeader.css"
 
 export function IssueHeader() {
-  const { issue, update } = useIssueContext()
+  const { issue, update, issueSync } = useIssueContext()
 
   const { setIsCreatingAttachment } = useModalsContext()
 
@@ -29,7 +30,7 @@ export function IssueHeader() {
 
   return (
     <>
-      <div className="issueHeaderTopRow">
+      <div className={cx("issueHeaderTopRow", issueSync.isStale && "issueHeaderTopRowStale")}>
         {issue.trashed && (
           <span className="issueTrashedLabel">
             <TrashIcon /> Trashed

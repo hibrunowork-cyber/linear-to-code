@@ -18,6 +18,18 @@
   border-radius: 6px;
 }
 
+/* The issue changed in Linear behind this panel. The bar is sticky, so the
+   color must stay opaque: orange mixed into the theme background keeps the
+   text readable in light and dark instead of a translucent wash. */
+.issueHeaderTopRowStale {
+  background-color: rgb(255 140 0 / 22%);
+  background-color: color-mix(in srgb, #ff8c00 22%, var(--bg-color));
+  border-color: color-mix(in srgb, #ff8c00 55%, var(--rs-border-primary));
+  transition:
+    background-color 0.3s ease,
+    border-color 0.3s ease;
+}
+
 .issueHeaderTopRowLeft {
   display: flex;
   flex-wrap: wrap;
