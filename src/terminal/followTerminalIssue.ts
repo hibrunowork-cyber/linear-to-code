@@ -39,6 +39,9 @@ async function revealIssueForTerminal(terminal: Terminal | undefined) {
       ViewColumn.Active,
       { preserveFocus: true },
     )
+    // And the sidebar follows along: the same issue gets selected in the
+    // My Issues tree, still without stealing the terminal's focus.
+    Controller.issueViewer.revealIssueInTree(identifier)
   } catch (error) {
     // Not authenticated, unknown identifier, dropped connection: none of it is
     // worth a popup on a click the user made for another reason.

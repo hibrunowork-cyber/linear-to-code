@@ -823,13 +823,59 @@ export class MyIssuesView
     return item
   }
 
-  private _getRootElements(): Team[] | WorkflowState[] | null {
-    const teams = Object.values(this.#teams).filter((team) =>
+  // Needed by TreeView.reveal: without getParent the API refuses to reveal.
+  public getParent(element: Team | WorkflowState | Issue): Team | WorkflowState | null {
+    if (element.__key === "issue") {
+      // @ts-expect-error the SDK keeps the relations on private fields
+      const teamId = element._team?.id as string | undefined
+      // @ts-expect-error same
+      const stateId = element._state?.id as string | undefined
+      const state = teamId && stateId ? this.#workflowStatesByTeam[teamId]?.[stateId] : undefined
+      return (state as unknown as WorkflowState) ?? null
+    }
+
+    if (element.__key === "workflowState") {
+      const teams = this._teamsWithIssues()
+      // With a single team the workflow states ARE the root level.
+      if (teams.length <= 1) {
+        return null
+      }
+      return teams.find((team) => this.#workflowStatesByTeam[team.id]?.[element.id]) ?? null
+    }
+
+    return null
+  }
+
+  /**
+   * Selects the issue in the My Issues tree without stealing focus. Used by
+   * the terminal follow: clicking `Claude · CLA-N` highlights CLA-N here too.
+   */
+  public revealIssueInTree(identifier: string): void {
+    const wanted = identifier.trim().toUpperCase()
+    const issue = Array.from(this.#myIssues.values()).find(
+      (candidate) => candidate.identifier?.toUpperCase() === wanted,
+    )
+    if (!issue || !this.#treeView) {
+      return
+    }
+    void this.#treeView
+      .reveal(issue, { select: true, focus: false, expand: true })
+      .then(undefined, () => {
+        // The issue can leave the view between the click and the reveal.
+      })
+  }
+
+  private _teamsWithIssues(): Team[] {
+    return Object.values(this.#teams).filter((team) =>
       Array.from(this.#myIssues.values()).some(
         // @ts-expect-error
         (issue) => issue._team.id === team.id,
       ),
     )
+  }
+
+  private _getRootElements(): Team[] | WorkflowState[] | null {
+    const teams = this._teamsWithIssues()
 
     if (teams.length === 0) {
       return null
