@@ -143,6 +143,7 @@ export class MyIssuesView
       commands.registerCommand(Commands.openCurrentBranchIssue, () =>
         this.openCurrentBranchIssue(),
       ),
+      commands.registerCommand(Commands.searchIssues, () => this.searchIssues()),
       commands.registerCommand(Commands.startWork, (issue: Issue) => this.startWork(issue)),
       commands.registerCommand(Commands.startWorkWithAgent, (issue: Issue) =>
         this.startWorkWithAgent(issue),
@@ -844,6 +845,44 @@ export class MyIssuesView
     }
 
     return null
+  }
+
+  /**
+   * Fuzzy issue search over everything loaded in the view, Cmd+P style.
+   * Picking opens the issue and selects it in the tree.
+   */
+  public async searchIssues(): Promise<void> {
+    const ordem: Record<string, number> = {
+      started: 0,
+      unstarted: 1,
+      backlog: 2,
+      completed: 3,
+      canceled: 4,
+    }
+    const issues = Array.from(this.#myIssues.values()).sort((a, b) => {
+      // @ts-expect-error the SDK keeps the state on a private field
+      const pa = ordem[a._state?.type as string] ?? 9
+      // @ts-expect-error same
+      const pb = ordem[b._state?.type as string] ?? 9
+      return pa - pb || (a.identifier ?? "").localeCompare(b.identifier ?? "")
+    })
+
+    const picked = await window.showQuickPick(
+      issues.map((issue) => ({
+        label: `${issue.identifier} · ${issue.title ?? ""}`,
+        // @ts-expect-error private field again
+        description: (issue._state?.name as string) ?? "",
+        issue,
+      })),
+      { placeHolder: "Search issues by number or title", matchOnDescription: true },
+    )
+
+    if (picked) {
+      await this.openIssue(picked.issue)
+      if (picked.issue.identifier) {
+        this.revealIssueInTree(picked.issue.identifier)
+      }
+    }
   }
 
   /**

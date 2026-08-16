@@ -17,6 +17,7 @@ export enum Commands {
   openIssue = "linearToCode.commands.openIssue",
   openIssueExternal = "linearToCode.commands.openIssueExternal",
   openCurrentBranchIssue = "linearToCode.commands.openCurrentBranchIssue",
+  searchIssues = "linearToCode.commands.searchIssues",
   startWork = "linearToCode.commands.startWork",
   startWorkWithAgent = "linearToCode.commands.startWorkWithAgent",
   reviewPullRequestWithAgent = "linearToCode.commands.reviewPullRequestWithAgent",

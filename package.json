@@ -3,7 +3,7 @@
   "displayName": "Linear in Editor",
   "description": "Get the entire Linear experience in your editor.",
   "icon": "resources/images/linear_dark.png",
-  "version": "0.1.9",
+  "version": "0.1.10",
   "publisher": "hpon",
   "repository": "https://github.com/hponcet/linear-to-code",
   "engines": {
@@ -231,6 +231,13 @@
         "title": "Toggle project filter",
         "category": "Linear to Code",
         "icon": "$(filter)"
+      },
+      {
+        "command": "linearToCode.commands.searchIssues",
+        "title": "Search issues",
+        "icon": "$(search)",
+        "category": "Linear to Code",
+        "enablement": "linearToCode:isLinearAuthenticated"
       }
     ],
     "menus": {
@@ -289,6 +296,11 @@
         }
       ],
       "view/title": [
+        {
+          "command": "linearToCode.commands.searchIssues",
+          "when": "view == linearToCode.views.myIssues",
+          "group": "navigation@0"
+        },
         {
           "command": "linearToCode.commands.toggleProjectFilter",
           "when": "view == linearToCode.views.myIssues",
@@ -429,6 +441,16 @@
         "command": "linearToCode.commands.openCurrentBranchIssue",
         "key": "ctrl+k ctrl+i",
         "mac": "cmd+k cmd+i"
+      },
+      {
+        "command": "linearToCode.commands.searchIssues",
+        "key": "ctrl+k l",
+        "mac": "cmd+k l"
+      },
+      {
+        "command": "linearToCode.commands.searchIssues",
+        "key": "ctrl+k ctrl+l",
+        "mac": "cmd+k cmd+l"
       }
     ],
     "configuration": {
