@@ -3,6 +3,7 @@ import { buildClaudeIssuePrompt } from "src/claudeCode/claudePrompt"
 import {
   openClaudeCodeWithPrompt,
   openClaudeTerminalWithPrompt,
+  resumeClaudeTerminal,
 } from "src/claudeCode/openClaudeCode"
 import { Controller } from "src/controller"
 import { readAgentSettings } from "src/cursor/agentPromptSettings"
@@ -19,6 +20,24 @@ type AgentTarget = "cursor" | "claude" | "claude-terminal"
 function readAgentTarget(): AgentTarget {
   const value = workspace.getConfiguration("linearToCode").get<AgentTarget>("agentTarget")
   return value === "claude" || value === "claude-terminal" ? value : "cursor"
+}
+
+// The follow-up sent to a live session is the issue's latest comment — the
+// flow this supports is "add a comment, hit play again". Falls back to a
+// generic nudge when the issue has no comments.
+async function buildFollowUpText(issueId: string, identifier: string): Promise<string> {
+  try {
+    const comments = await Controller.linearService.getComments(issueId)
+    const latest = [...comments].sort(
+      (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+    )[comments.length - 1]
+    if (latest?.body?.trim()) {
+      return `Atualização na ${identifier} — novo comentário: ${latest.body.trim()} — continue a partir disso.`
+    }
+  } catch {
+    // Comment fetch is best effort; the generic nudge below still works.
+  }
+  return `A issue ${identifier} foi atualizada no Linear. Releia a issue e continue a partir das mudanças.`
 }
 
 export async function launchCursorAgentForIssue(
@@ -41,6 +60,10 @@ export async function launchCursorAgentForIssue(
   if (target === "claude" || target === "claude-terminal") {
     const prompt = buildClaudeIssuePrompt(identifier)
     if (target === "claude-terminal") {
+      const followUp = await buildFollowUpText(issue.id, identifier)
+      if (followUp && resumeClaudeTerminal(identifier, followUp)) {
+        return
+      }
       await openClaudeTerminalWithPrompt(prompt, identifier)
     } else {
       await openClaudeCodeWithPrompt(prompt, identifier)

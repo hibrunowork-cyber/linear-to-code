@@ -111,3 +111,35 @@ export async function openClaudeTerminalWithPrompt(prompt: string, label: string
   terminal.show()
   terminal.sendText(buildClaudeCommand(trimmedPrompt))
 }
+
+/**
+ * Reuse the live `Claude · <label>` terminal instead of spawning a second
+ * session: type the follow-up text into it so the running Claude session keeps
+ * its context. The text is sent WITHOUT the trailing newline on purpose — if
+ * the Claude process has already exited, an auto-submitted line would run in
+ * the bare shell as a command. The user reviews and presses Enter.
+ *
+ * Returns false when there is no live terminal for the label (caller should
+ * start a fresh session).
+ */
+export function resumeClaudeTerminal(label: string, followUpText: string): boolean {
+  const name = `Claude · ${label}`
+  const existing = window.terminals.find((t) => t.name === name && t.exitStatus === undefined)
+  if (!existing) {
+    return false
+  }
+
+  // One physical line: inside the Claude TUI a literal newline submits the
+  // message, so a multi-line comment would be split into several sends.
+  const flattened = followUpText.replace(/\s*\n+\s*/g, " ").trim()
+  if (!flattened) {
+    return false
+  }
+
+  existing.show()
+  existing.sendText(flattened, false)
+  void window.showInformationMessage(
+    `${label}: follow-up typed into the existing session. Review and press Enter to send.`,
+  )
+  return true
+}
