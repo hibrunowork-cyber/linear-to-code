@@ -144,14 +144,22 @@ export class MyIssuesView
         this.openCurrentBranchIssue(),
       ),
       commands.registerCommand(Commands.searchIssues, () => this.searchIssues()),
-      commands.registerCommand(Commands.startWork, (issue: Issue) => this.startWork(issue)),
-      commands.registerCommand(Commands.startWorkWithAgent, (issue: Issue) =>
-        this.startWorkWithAgent(issue),
-      ),
-      commands.registerCommand(Commands.configureBranch, (issue: Issue) => this.startWork(issue)),
-      commands.registerCommand(Commands.checkoutIssue, (issue: Issue) =>
-        this.checkoutToIssueBranch(issue.id),
-      ),
+      commands.registerCommand(Commands.startWork, (issue?: Issue) => {
+        const resolved = this.#resolveIssueArg(issue)
+        if (resolved) void this.startWork(resolved)
+      }),
+      commands.registerCommand(Commands.startWorkWithAgent, (issue?: Issue) => {
+        const resolved = this.#resolveIssueArg(issue)
+        if (resolved) void this.startWorkWithAgent(resolved)
+      }),
+      commands.registerCommand(Commands.configureBranch, (issue?: Issue) => {
+        const resolved = this.#resolveIssueArg(issue)
+        if (resolved) void this.startWork(resolved)
+      }),
+      commands.registerCommand(Commands.checkoutIssue, (issue?: Issue) => {
+        const resolved = this.#resolveIssueArg(issue)
+        if (resolved) void this.checkoutToIssueBranch(resolved.id)
+      }),
       commands.registerCommand(Commands.refresh, () => this.fetchDatas()),
       commands.registerCommand(Commands.toggleViewMode, () => this.toggleViewMode()),
       commands.registerCommand(Commands.toggleProjectFilter, () => this.toggleProjectFilter()),
@@ -496,6 +504,19 @@ export class MyIssuesView
       `Start work blocked: this folder is inside the repository at ${repoRoot}, not a repository of its own. Open the code repository's root folder to create the issue branch.`,
     )
     return false
+  }
+
+  // Tree inline buttons can fire the command with undefined when the click
+  // lands mid-refresh (the item was just discarded) or right after a window
+  // restore. Fall back to the tree's current selection before giving up.
+  #resolveIssueArg(issue?: Issue): Issue | null {
+    if (issue?.id) return issue
+    const selected = this.#treeView?.selection.find(
+      (el): el is Issue => typeof el === "object" && el !== null && "identifier" in el,
+    )
+    if (selected?.id) return selected
+    void window.showWarningMessage("Select an issue in the tree to run this action.")
+    return null
   }
 
   public async startWork(issue: Issue, fromCheckout?: true) {
